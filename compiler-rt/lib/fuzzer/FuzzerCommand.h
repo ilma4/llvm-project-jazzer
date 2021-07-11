@@ -16,9 +16,16 @@
 #include "FuzzerIO.h"
 
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#ifdef _WIN32
+#define QUOTE_CHARACTER "\""
+#else
+#define QUOTE_CHARACTER "'"
+#endif
 
 namespace fuzzer {
 
@@ -139,8 +146,15 @@ public:
   // be the equivalent command line.
   std::string toString() const {
     std::stringstream SS;
-    for (const auto &arg : getArguments())
-      SS << arg << " ";
+    bool first_arg = true;
+    for (const auto &arg : getArguments()) {
+      if (first_arg) {
+        SS << arg << " ";
+        first_arg = false;
+      } else {
+        SS << QUOTE_CHARACTER << arg << QUOTE_CHARACTER " ";
+      }
+    }
     if (hasOutputFile())
       SS << ">" << getOutputFile() << " ";
     if (isOutAndErrCombined())
