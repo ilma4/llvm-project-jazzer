@@ -576,16 +576,6 @@ void Fuzzer::CrashOnOverwrittenData() {
   _Exit(Options.ErrorExitCode); // Stop right now.
 }
 
-// Compare two arrays, but not all bytes if the arrays are large.
-static bool LooseMemeq(const uint8_t *A, const uint8_t *B, size_t Size) {
-  const size_t Limit = 64;
-  if (Size <= 64)
-    return !memcmp(A, B, Size);
-  // Compare first and last Limit/2 bytes.
-  return !memcmp(A, B, Limit / 2) &&
-         !memcmp(A + Size - Limit / 2, B + Size - Limit / 2, Limit / 2);
-}
-
 // This method is not inlined because it would cause a test to fail where it
 // is part of the stack unwinding. See D97975 for details.
 ATTRIBUTE_NOINLINE bool Fuzzer::ExecuteCallback(const uint8_t *Data,
@@ -593,14 +583,6 @@ ATTRIBUTE_NOINLINE bool Fuzzer::ExecuteCallback(const uint8_t *Data,
   TPC.RecordInitialStack();
   TotalNumberOfRuns++;
   assert(InFuzzingThread());
-  // We copy the contents of Unit into a separate heap buffer
-  // so that we reliably find buffer overflows in it.
-  uint8_t *DataCopy = new uint8_t[Size];
-  memcpy(DataCopy, Data, Size);
-  if (EF->__msan_unpoison)
-    EF->__msan_unpoison(DataCopy, Size);
-  if (EF->__msan_unpoison_param)
-    EF->__msan_unpoison_param(2);
   if (CurrentUnitData && CurrentUnitData != Data)
     memcpy(CurrentUnitData, Data, Size);
   CurrentUnitSize = Size;
@@ -611,16 +593,13 @@ ATTRIBUTE_NOINLINE bool Fuzzer::ExecuteCallback(const uint8_t *Data,
     UnitStartTime = system_clock::now();
     TPC.ResetMaps();
     RunningUserCallback = true;
-    CBRes = CB(DataCopy, Size);
+    CBRes = CB(Data, Size);
     RunningUserCallback = false;
     UnitStopTime = system_clock::now();
     assert(CBRes == 0 || CBRes == -1);
     HasMoreMallocsThanFrees = AllocTracer.Stop();
   }
-  if (!LooseMemeq(DataCopy, Data, Size))
-    CrashOnOverwrittenData();
   CurrentUnitSize = 0;
-  delete[] DataCopy;
   return CBRes == 0;
 }
 
