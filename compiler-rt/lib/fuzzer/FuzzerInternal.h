@@ -119,6 +119,7 @@ private:
   uint8_t BaseSha1[kSHA1NumBytes];  // Checksum of the base unit.
 
   bool GracefulExitRequested = false;
+  bool ReturnRequested = false;
 
   size_t TotalNumberOfRuns = 0;
   size_t NumberOfNewUnitsAdded = 0;
