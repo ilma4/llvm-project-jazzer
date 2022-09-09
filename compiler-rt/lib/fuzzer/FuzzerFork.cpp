@@ -309,9 +309,9 @@ void WorkerThread(JobQueue *FuzzQ, JobQueue *MergeQ) {
 }
 
 // This is just a skeleton of an experimental -fork=1 feature.
-void FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
-                  const std::vector<std::string> &Args,
-                  const std::vector<std::string> &CorpusDirs, int NumJobs) {
+int FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
+                 const std::vector<std::string> &Args,
+                 const std::vector<std::string> &CorpusDirs, int NumJobs) {
   Printf("INFO: -fork=%d: fuzzing in separate process(s)\n", NumJobs);
 
   GlobalEnv Env;
@@ -488,7 +488,7 @@ void FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
   // Use the exit code from the last child process.
   Printf("INFO: exiting: %d time: %zds\n", ExitCode,
          Env.secondsSinceProcessStartUp());
-  exit(ExitCode);
+  return ExitCode;
 }
 
 } // namespace fuzzer
