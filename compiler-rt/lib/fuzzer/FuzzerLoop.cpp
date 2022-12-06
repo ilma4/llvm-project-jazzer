@@ -280,8 +280,10 @@ void Fuzzer::AlarmCallback() {
   // In Windows and Fuchsia, Alarm callback is executed by a different thread.
   // NetBSD's current behavior needs this change too.
 #if !LIBFUZZER_WINDOWS && !LIBFUZZER_NETBSD && !LIBFUZZER_FUCHSIA
-  if (!InFuzzingThread())
-    return;
+  // When launched within the JVM, the alarm callback is executed by a different
+  // thread. The JVM doesn't seem to use SIGALRM for regular functionality.
+  // if (!InFuzzingThread())
+  //   return;
 #endif
   if (!RunningUserCallback)
     return; // We have not started running units yet.
