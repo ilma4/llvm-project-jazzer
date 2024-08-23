@@ -602,6 +602,8 @@ ATTRIBUTE_NOINLINE bool Fuzzer::ExecuteCallback(const uint8_t *Data,
     HasMoreMallocsThanFrees = AllocTracer.Stop();
   }
   CurrentUnitSize = 0;
+  if (CBRes == -3)
+    RerunWithMoreDataRequested = true;
   if (CBRes == -2)
     ReturnRequested = true;
   return CBRes == 0;
@@ -698,6 +700,15 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
   }
 }
 
+// returns NewSize
+static size_t extendData(uint8_t *Data, size_t OldSize, size_t MaxSize) {
+  if (OldSize == 0) return 0;
+
+  size_t NewSize = std::min(OldSize * 3 / 2, MaxSize);
+  memcpy(Data + OldSize, Data, NewSize - OldSize);
+  return NewSize;
+}
+
 void Fuzzer::MutateAndTestOne() {
   MD.StartMutationSequence();
 
@@ -746,6 +757,15 @@ void Fuzzer::MutateAndTestOne() {
                          /*ForceAddToCorpus*/ false, &FoundUniqFeatures);
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
+
+    if (RerunWithMoreDataRequested) {
+      RerunWithMoreDataRequested = false;
+      if (Size < Options.MaxLen){
+        extendData(CurrentUnitData, Size, Options.MaxLen);
+        return MutateAndTestOne();
+      }
+      NewCov = false;
+    }
     if (NewCov) {
       ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
       break;  // We will mutate this input more in the next rounds.

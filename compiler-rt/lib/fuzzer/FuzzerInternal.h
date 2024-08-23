@@ -120,6 +120,7 @@ private:
 
   bool GracefulExitRequested = false;
   bool ReturnRequested = false;
+  bool RerunWithMoreDataRequested = false;
 
   size_t TotalNumberOfRuns = 0;
   size_t NumberOfNewUnitsAdded = 0;
