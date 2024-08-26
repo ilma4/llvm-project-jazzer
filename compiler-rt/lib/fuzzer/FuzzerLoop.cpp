@@ -758,13 +758,13 @@ void Fuzzer::MutateAndTestOne() {
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
 
-    if (RerunWithMoreDataRequested) {
+    while (RerunWithMoreDataRequested && Size < Options.MaxLen && Size != 0) {
       RerunWithMoreDataRequested = false;
-      if (Size < Options.MaxLen){
-        extendData(CurrentUnitData, Size, Options.MaxLen);
-        return MutateAndTestOne();
-      }
-      NewCov = false;
+      Size = extendData(CurrentUnitData, Size, Options.MaxLen);
+      NewCov = RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true, &II,
+                      /*ForceAddToCorpus*/ false, &FoundUniqFeatures);
+      TryDetectingAMemoryLeak(CurrentUnitData, Size,
+                              /*DuringInitialCorpusExecution*/ false);
     }
     if (NewCov) {
       ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
