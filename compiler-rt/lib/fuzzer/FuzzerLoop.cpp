@@ -709,6 +709,8 @@ namespace {
 static size_t extendData(uint8_t *Data, size_t OldSize, size_t MaxSize) {
   if (OldSize == 0)
     return 0;
+  if (OldSize == 1)
+    return 2;
 
   size_t NewSize = std::min(OldSize * 3 / 2, MaxSize);
   memcpy(Data + OldSize, Data, NewSize - OldSize);
