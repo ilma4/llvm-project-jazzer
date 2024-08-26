@@ -602,7 +602,7 @@ ATTRIBUTE_NOINLINE bool Fuzzer::ExecuteCallback(const uint8_t *Data,
     CBRes = CB(Data, Size);
     RunningUserCallback = false;
     UnitStopTime = system_clock::now();
-    assert(CBRes == 0 || CBRes == -1 || CBRes == -2);
+    assert(CBRes == 0 || CBRes == -1 || CBRes == -2 || CBRes == -3);
     HasMoreMallocsThanFrees = AllocTracer.Stop();
   }
   CurrentUnitSize = 0;
@@ -610,7 +610,7 @@ ATTRIBUTE_NOINLINE bool Fuzzer::ExecuteCallback(const uint8_t *Data,
     RerunWithMoreDataRequested = true;
   if (CBRes == -2)
     ReturnRequested = true;
-  return CBRes == 0;
+  return CBRes == 0 || CBRes == -3;
 }
 
 std::string Fuzzer::WriteToOutputCorpus(const Unit &U) {
