@@ -715,6 +715,8 @@ static size_t extendData(uint8_t *Data, size_t OldSize, size_t MaxSize) {
   memcpy(Data + OldSize, Data, NewSize - OldSize);
   return NewSize;
 }
+
+static constexpr int MAX_ATTEMPTS = 1;
 } // namespace
 
 void Fuzzer::MutateAndTestOne() {
@@ -766,7 +768,10 @@ void Fuzzer::MutateAndTestOne() {
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
 
-    while (RerunWithMoreDataRequested && Size < Options.MaxLen && Size != 0) {
+    int attempts = 0;
+    while (RerunWithMoreDataRequested && Size < Options.MaxLen && Size != 0 &&
+           attempts < MAX_ATTEMPTS) {
+      attempts++;
       RerunWithMoreDataRequested = false;
       Size = extendData(CurrentUnitData, Size, Options.MaxLen);
       bool OldFoundUniqFeatures = FoundUniqFeatures;
