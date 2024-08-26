@@ -710,7 +710,8 @@ static size_t extendData(uint8_t *Data, size_t OldSize, size_t MaxSize) {
   if (OldSize == 0)
     return 0;
 
-  size_t NewSize = std::min(OldSize * static_cast<size_t>(2), MaxSize);
+  size_t NewSize = std::min<size_t>(OldSize * static_cast<size_t>(2), MaxSize);
+  // TODO: investigate more intelligent ways to fill new data
   memcpy(Data + OldSize, Data, NewSize - OldSize);
   return NewSize;
 }
@@ -768,8 +769,10 @@ void Fuzzer::MutateAndTestOne() {
     while (RerunWithMoreDataRequested && Size < Options.MaxLen && Size != 0) {
       RerunWithMoreDataRequested = false;
       Size = extendData(CurrentUnitData, Size, Options.MaxLen);
+      bool OldFoundUniqFeatures = FoundUniqFeatures;
       NewCov |= RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true, &II,
                        /*ForceAddToCorpus*/ false, &FoundUniqFeatures);
+      FoundUniqFeatures |= OldFoundUniqFeatures;
       TryDetectingAMemoryLeak(CurrentUnitData, Size,
                               /*DuringInitialCorpusExecution*/ false);
     }
